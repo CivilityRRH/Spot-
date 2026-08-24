@@ -1,0 +1,6 @@
+{
+  "name": "SpotQuest - Live Scavenger Social Tournament",
+  "description": "A social media tournament platform combining I-Spy item discovery, real-time live streaming & recording, good deeds karma score calculators, customizable scavenger lists, team synergy, monthly top contenders tournaments, and purse jackpots.",
+  "requestFramePermissions": ["camera", "microphone"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
