@@ -1,6 +1,22 @@
-import React from 'react';
-import { Users, Flame, Trophy, ShieldCheck, Sparkles, Award, Layers } from 'lucide-react';
+import React, { useState } from 'react';
+import {
+  Users,
+  Flame,
+  Trophy,
+  ShieldCheck,
+  Sparkles,
+  Award,
+  Layers,
+  Video,
+  MessageSquare,
+  ExternalLink,
+  CheckCircle2,
+  Radio
+} from 'lucide-react';
 import { Squad, UserProfile } from '../types';
+import { createMeetSpace } from '../services/googleWorkspaceService';
+import { SquadDispatchStream } from './SquadDispatchStream';
+import { sounds } from '../utils/audio';
 
 interface TeamHubViewProps {
   squads: Squad[];
@@ -8,8 +24,36 @@ interface TeamHubViewProps {
 }
 
 export const TeamHubView: React.FC<TeamHubViewProps> = ({ squads, user }) => {
+  const [activeMeetLink, setActiveMeetLink] = useState<{ [squadId: string]: string }>({});
+  const [isCreatingMeet, setIsCreatingMeet] = useState<string | null>(null);
+  const [selectedSquad, setSelectedSquad] = useState<Squad>(
+    squads.find((s) => s.id === user.squadId) || squads[0]
+  );
+
+  const handleStartSquadMeet = async (squad: Squad) => {
+    setIsCreatingMeet(squad.id);
+    try {
+      const meet = await createMeetSpace(`${squad.name} Live Strategy Room`);
+      setActiveMeetLink((prev) => ({ ...prev, [squad.id]: meet.meetingUri }));
+      sounds.playKarmaChime();
+    } catch (e) {
+      console.warn('Error starting meet:', e);
+    } finally {
+      setIsCreatingMeet(null);
+    }
+  };
+
+  const handleFocusSquadDispatch = (squad: Squad) => {
+    setSelectedSquad(squad);
+    sounds.playTap();
+    const elem = document.getElementById('squad-dispatch-stream');
+    if (elem) {
+      elem.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Banner */}
       <div className="bg-gradient-to-r from-slate-900 via-indigo-950/80 to-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl">
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
@@ -23,10 +67,10 @@ export const TeamHubView: React.FC<TeamHubViewProps> = ({ squads, user }) => {
               </span>
             </div>
             <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight">
-              Squads & Collective Multipliers
+              Squads, Google Meet Rooms & Chat Hubs
             </h2>
             <p className="text-xs sm:text-sm text-slate-300 mt-1 max-w-xl">
-              "Scavenge as a team, win the purse for yourself!" Every good deed and item logged by your squad members unlocks collective multiplier bonuses for every teammate.
+              "Scavenge as a team, win the purse for yourself!" Coordinate in real-time using <strong className="text-indigo-300">Google Meet</strong> voice calls and <strong className="text-emerald-300">Google Chat</strong> dispatch alerts to find town items and complete verified community good deeds.
             </p>
           </div>
 
@@ -99,6 +143,39 @@ export const TeamHubView: React.FC<TeamHubViewProps> = ({ squads, user }) => {
                 </div>
                 <span className="text-sm font-black text-amber-300">{squad.teamMultiplier}x</span>
               </div>
+
+              {/* Google Meet & Chat integrations */}
+              <div className="space-y-2 pt-1 border-t border-slate-800/80">
+                <button
+                  onClick={() => handleFocusSquadDispatch(squad)}
+                  className="w-full py-2 px-3 rounded-xl bg-slate-800 hover:bg-slate-750 text-indigo-300 hover:text-indigo-200 border border-indigo-500/30 font-bold text-xs flex items-center justify-center gap-1.5 transition"
+                >
+                  <MessageSquare className="w-3.5 h-3.5 text-indigo-400" />
+                  <span>View Google Chat Dispatch Stream</span>
+                </button>
+
+                {activeMeetLink[squad.id] ? (
+                  <a
+                    href={activeMeetLink[squad.id]}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full py-2 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs shadow-md flex items-center justify-center gap-1.5 transition"
+                  >
+                    <Video className="w-3.5 h-3.5" />
+                    <span>Join Live Squad Meet Room</span>
+                    <ExternalLink className="w-3 h-3 opacity-70" />
+                  </a>
+                ) : (
+                  <button
+                    onClick={() => handleStartSquadMeet(squad)}
+                    disabled={isCreatingMeet === squad.id}
+                    className="w-full py-2 px-3 rounded-xl bg-indigo-600/80 hover:bg-indigo-600 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition"
+                  >
+                    <Video className="w-3.5 h-3.5" />
+                    <span>{isCreatingMeet === squad.id ? 'Creating Room...' : 'Start Google Meet War Room'}</span>
+                  </button>
+                )}
+              </div>
             </div>
 
             {/* Footer */}
@@ -109,6 +186,14 @@ export const TeamHubView: React.FC<TeamHubViewProps> = ({ squads, user }) => {
           </div>
         ))}
       </div>
+
+      {/* Google Chat Squad Dispatch Stream Section */}
+      <SquadDispatchStream
+        squads={squads}
+        user={user}
+        activeSquad={selectedSquad}
+        onSelectSquad={setSelectedSquad}
+      />
     </div>
   );
 };

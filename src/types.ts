@@ -87,6 +87,11 @@ export interface Tournament {
   id: string;
   title: string;
   description: string;
+  townOrCity: string; // e.g. "Seattle, WA", "Austin, TX", "London, UK", "Global Metro"
+  regionCoordinates?: { lat: number; lng: number };
+  huntCategory: 'Urban Exploration' | 'Eco Cleanup' | 'Community Kindness' | 'Historic Town' | 'Night Owl Hunt';
+  specificHuntItems: string[]; // Specific items to hunt for in this town/tournament (e.g. "Art Deco Mailbox", "Bronze Pioneer Plaque", "Solar Powered Bench")
+  specificGoodDeeds: string[]; // Specific good deeds tailored for this community (e.g. "Clean 10 pieces of park litter", "Help carry grocery bags", "Water wilting community planters")
   buyInFee: number; // in USD
   totalPurse: number; // in USD
   playersCount: number;
@@ -110,6 +115,36 @@ export interface Tournament {
   };
   joinedPlayerIds: string[];
   challengesCount?: number;
+  activeSpectatorCount?: number;
+  isLiveBroadcasting?: boolean;
+}
+
+export interface LiveTVBroadcast {
+  id: string;
+  streamerId: string;
+  streamerName: string;
+  streamerAvatar: string;
+  streamerHandle: string;
+  streamerSquad?: string;
+  townOrCity: string;
+  tournamentId: string;
+  tournamentTitle: string;
+  title: string;
+  videoUrl: string; // Live stream feed or recorded simulated video
+  activeSpectatorCount: number;
+  targetItem?: string;
+  targetDeed?: string;
+  aiVerificationStatus: 'scanning' | 'verified_item' | 'verified_deed' | 'analyzing_video' | 'idle';
+  aiScoreBreakdown?: {
+    itemConfidence: number;
+    deedConfidence: number;
+    authenticityScore: number;
+    liveKarmaAwarded: number;
+    spectatorHypeBonus: number;
+    feedback: string;
+  };
+  startedAt: string;
+  chatMessages: LiveStreamMessage[];
 }
 
 export interface UserProfile {
@@ -120,6 +155,7 @@ export interface UserProfile {
   avatar: string;
   bio?: string;
   karmaPoints: number;
+  karmaKoins: number;
   itemsFound: number;
   goodDeedsLogged: number;
   tournamentsWon: number;

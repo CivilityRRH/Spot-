@@ -27,6 +27,7 @@ import {
 import { UserProfile } from '../types';
 import { sounds } from '../utils/audio';
 import { compressImageDataUrl } from '../utils/storage';
+import { KarmaKoinGifting } from './KarmaKoinGifting';
 
 interface ProfileModalProps {
   isOpen: boolean;
@@ -445,6 +446,8 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
             <strong className="text-base font-black text-amber-300">${user.totalPurseWinnings.toLocaleString()}</strong>
           </div>
         </div>
+
+        <KarmaKoinGifting user={user} />
 
         {/* FOLLOWER ADVANTAGE HUB */}
         <div className="bg-gradient-to-r from-rose-950/70 via-slate-950 to-indigo-950/70 border border-rose-500/40 p-4 rounded-2xl space-y-2 text-xs">

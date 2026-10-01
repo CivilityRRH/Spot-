@@ -9,7 +9,10 @@ import {
   Flame,
   Award,
   Layers,
-  HelpCircle
+  HelpCircle,
+  Bot,
+  ShieldCheck,
+  Loader2
 } from 'lucide-react';
 import { ScavengerItem, GoodDeedAction } from '../types';
 import { sounds } from '../utils/audio';
@@ -48,7 +51,15 @@ export const ItemClaimModal: React.FC<ItemClaimModalProps> = ({
   const [proofMediaUrl, setProofMediaUrl] = useState<string>(
     'https://images.unsplash.com/photo-1528459801416-a9e53bbf4e17?w=800&auto=format&fit=crop&q=80'
   );
-  const [isCapturingCam, setIsCapturingCam] = useState(false);
+  const [isVerifyingWithAI, setIsVerifyingWithAI] = useState(false);
+  const [aiVerdict, setAiVerdict] = useState<{
+    verified: boolean;
+    confidence: number;
+    feedback: string;
+    detectedObjects: string[];
+    suggestedBonusPoints: number;
+  } | null>(null);
+
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
@@ -64,11 +75,12 @@ export const ItemClaimModal: React.FC<ItemClaimModalProps> = ({
   const selectedItem = items.find((i) => i.id === selectedItemId) || items?.[0];
   const selectedDeed = goodDeeds.find((d) => d.id === selectedDeedId);
 
-  // Scoring calculation
+  // Scoring calculation with optional Gemini Vision bonus
   const baseItemPoints = selectedItem ? selectedItem.basePoints : 0;
   const baseKarmaPoints = selectedDeed ? selectedDeed.baseKarmaPoints : 0;
   const karmaMultiplier = selectedDeed ? selectedDeed.multiplierBoost : 1.0;
-  const totalEarned = Math.round((baseItemPoints + baseKarmaPoints) * karmaMultiplier);
+  const aiBonus = aiVerdict ? aiVerdict.suggestedBonusPoints : 0;
+  const totalEarned = Math.round((baseItemPoints + baseKarmaPoints) * karmaMultiplier) + aiBonus;
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -77,7 +89,41 @@ export const ItemClaimModal: React.FC<ItemClaimModalProps> = ({
       if (compressed) {
         setProofMediaUrl(compressed);
         sounds.playCameraShutter();
+        setAiVerdict(null); // Reset verdict for new photo
       }
+    }
+  };
+
+  const handleGeminiVerify = async () => {
+    if (!selectedItem || !proofMediaUrl) return;
+    setIsVerifyingWithAI(true);
+
+    try {
+      const response = await fetch('/api/gemini/verify-photo', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          imageBase64: proofMediaUrl,
+          itemName: selectedItem.name,
+          itemCategory: selectedItem.category,
+          itemDescription: selectedItem.description,
+          goodDeedTitle: selectedDeed?.title,
+        }),
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        setAiVerdict(result);
+        if (result.verified) {
+          sounds.playPurseJackpot();
+        } else {
+          sounds.playKarmaChime();
+        }
+      }
+    } catch (err) {
+      console.error('AI verification failed:', err);
+    } finally {
+      setIsVerifyingWithAI(false);
     }
   };
 
@@ -89,9 +135,9 @@ export const ItemClaimModal: React.FC<ItemClaimModalProps> = ({
     onClaimSubmitted({
       item: selectedItem,
       goodDeed: selectedDeed,
-      notes: notes || `Spotted ${selectedItem.name}!`,
+      notes: notes || (aiVerdict ? `[Gemini Vision Verified ${aiVerdict.confidence}%] ${aiVerdict.feedback}` : `Spotted ${selectedItem.name}!`),
       proofMediaUrl,
-      pointsEarned: baseItemPoints,
+      pointsEarned: baseItemPoints + aiBonus,
       karmaEarned: baseKarmaPoints,
       totalEarned
     });
@@ -237,6 +283,80 @@ export const ItemClaimModal: React.FC<ItemClaimModalProps> = ({
               onChange={handleFileUpload}
               className="hidden"
             />
+
+            {/* Gemini Vision AI Referee Trigger & Results */}
+            <div className="mt-3 p-3.5 rounded-2xl bg-gradient-to-r from-indigo-950/60 via-purple-950/40 to-slate-900 border border-indigo-500/30">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-6 h-6 rounded-lg bg-indigo-500/20 border border-indigo-500/40 flex items-center justify-center text-indigo-400">
+                    <Bot className="w-3.5 h-3.5" />
+                  </div>
+                  <div>
+                    <span className="text-xs font-bold text-white flex items-center gap-1.5">
+                      Gemini Vision Referee
+                      <span className="text-[9px] uppercase px-1.5 py-0.2 bg-gradient-to-r from-cyan-500 to-indigo-500 text-white font-extrabold rounded">AI</span>
+                    </span>
+                    <span className="text-[10px] text-slate-400 block">Scan photo for instant verification & up to +50 bonus karma</span>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={handleGeminiVerify}
+                  disabled={isVerifyingWithAI || !proofMediaUrl}
+                  className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-cyan-500 to-indigo-600 hover:from-cyan-400 hover:to-indigo-500 text-white font-bold text-[11px] flex items-center gap-1.5 shadow-md disabled:opacity-50 transition cursor-pointer"
+                >
+                  {isVerifyingWithAI ? (
+                    <>
+                      <Loader2 className="w-3 h-3 animate-spin" />
+                      <span>Scanning...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="w-3 h-3 text-amber-300" />
+                      <span>{aiVerdict ? 'Re-Scan Photo' : 'Scan with Gemini'}</span>
+                    </>
+                  )}
+                </button>
+              </div>
+
+              {aiVerdict && (
+                <div className="mt-3 pt-3 border-t border-indigo-500/20 text-xs space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1.5 font-bold">
+                      {aiVerdict.verified ? (
+                        <>
+                          <ShieldCheck className="w-4 h-4 text-emerald-400" />
+                          <span className="text-emerald-400">Verified ({aiVerdict.confidence}% Confidence)</span>
+                        </>
+                      ) : (
+                        <>
+                          <HelpCircle className="w-4 h-4 text-amber-400" />
+                          <span className="text-amber-400">Uncertain Match ({aiVerdict.confidence}%)</span>
+                        </>
+                      )}
+                    </div>
+                    {aiVerdict.suggestedBonusPoints > 0 && (
+                      <span className="px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-extrabold text-[10px] border border-amber-500/30">
+                        +{aiVerdict.suggestedBonusPoints} AI Quality Bonus
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-slate-300 text-[11px] leading-relaxed">
+                    "{aiVerdict.feedback}"
+                  </p>
+                  {aiVerdict.detectedObjects && aiVerdict.detectedObjects.length > 0 && (
+                    <div className="flex flex-wrap gap-1 pt-1">
+                      {aiVerdict.detectedObjects.map((obj, i) => (
+                        <span key={i} className="px-2 py-0.5 bg-slate-800 text-slate-300 text-[9px] font-medium rounded-md border border-slate-700">
+                          🎯 {obj}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Notes / Context */}

@@ -61,6 +61,8 @@ export const LiveStreamModal: React.FC<LiveStreamModalProps> = ({
 
   const [recordedVideoUrl, setRecordedVideoUrl] = useState<string | null>(null);
   const [floatingReactions, setFloatingReactions] = useState<{ id: number; icon: string; x: number }[]>([]);
+  const [isScanningFrame, setIsScanningFrame] = useState(false);
+  const [liveScanVerdict, setLiveScanVerdict] = useState<any>(null);
   const [chatMessages, setChatMessages] = useState<LiveStreamMessage[]>([
     { id: '1', userName: 'TournamentBot', text: '🏆 Live Stream Broadcast started. Good luck on the hunt!', time: 'now' },
     { id: '2', userName: 'Maya_Hunter', text: 'Let’s go! What item are you looking for first?', time: 'just now' }
@@ -207,6 +209,67 @@ export const LiveStreamModal: React.FC<LiveStreamModalProps> = ({
     } else {
       // Create fallback dummy video url if real recorder unavailable
       setRecordedVideoUrl('https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?w=800&auto=format&fit=crop&q=80');
+    }
+  };
+
+  const handleScanCurrentFrameWithGemini = async () => {
+    const item = availableItems.find((i) => i.id === selectedItemId);
+    const deed = availableDeeds.find((d) => d.id === selectedDeedId);
+
+    setIsScanningFrame(true);
+    sounds.playCameraShutter();
+
+    try {
+      // Capture live frame from video element if active
+      let frameDataUrl = 'https://images.unsplash.com/photo-1513836279014-a89f7a76ae86?w=800&auto=format&fit=crop&q=80';
+      if (videoRef.current && cameraActive) {
+        try {
+          const canvas = document.createElement('canvas');
+          canvas.width = videoRef.current.videoWidth || 640;
+          canvas.height = videoRef.current.videoHeight || 480;
+          const ctx = canvas.getContext('2d');
+          if (ctx) {
+            ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
+            frameDataUrl = canvas.toDataURL('image/jpeg', 0.7);
+          }
+        } catch {
+          // fallback frame
+        }
+      }
+
+      const response = await fetch('/api/gemini/scan-live-frame', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          frameBase64: frameDataUrl,
+          targetItemName: item?.name,
+          targetDeedTitle: deed?.title,
+          townOrCity: 'Local Tournament District'
+        })
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        setLiveScanVerdict(result);
+        sounds.playPurseJackpot();
+
+        // Inject referee message to chat
+        setChatMessages((prev) => [
+          ...prev,
+          {
+            id: Date.now().toString(),
+            userName: '🤖 Gemini AI Referee',
+            text: `🎯 LIVE SCAN VERIFIED: ${result.feedback} (Karma: +${result.liveKarmaAwarded} pts, Authenticity: ${result.authenticityScore}%)`,
+            isKarmaDonation: true,
+            amount: result.liveKarmaAwarded,
+            time: 'just now'
+          }
+        ]);
+      }
+    } catch (e) {
+      console.error('Error scanning frame:', e);
+    } finally {
+      setIsScanningFrame(false);
     }
   };
 
@@ -425,13 +488,24 @@ export const LiveStreamModal: React.FC<LiveStreamModalProps> = ({
                     <span>Go Live & Record Now</span>
                   </button>
                 ) : (
-                  <button
-                    onClick={handleStopLive}
-                    className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-slate-800 border border-red-500 text-red-400 hover:bg-red-950/50 font-extrabold text-sm transition"
-                  >
-                    <Square className="w-4 h-4 fill-current" />
-                    <span>End Stream & Save Clip</span>
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={handleScanCurrentFrameWithGemini}
+                      disabled={isScanningFrame}
+                      className="flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-gradient-to-r from-cyan-600 to-indigo-600 hover:from-cyan-500 hover:to-indigo-500 text-white font-extrabold text-xs shadow-md transition disabled:opacity-50"
+                      title="AI scans current video frame to verify item or good deed"
+                    >
+                      <Sparkles className={`w-3.5 h-3.5 ${isScanningFrame ? 'animate-spin' : ''}`} />
+                      <span>{isScanningFrame ? 'Scanning...' : 'Gemini AI Scan Frame'}</span>
+                    </button>
+                    <button
+                      onClick={handleStopLive}
+                      className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-800 border border-red-500 text-red-400 hover:bg-red-950/50 font-extrabold text-xs transition"
+                    >
+                      <Square className="w-4 h-4 fill-current" />
+                      <span>End & Save</span>
+                    </button>
+                  </div>
                 )}
               </div>
 

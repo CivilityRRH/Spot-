@@ -1,0 +1,194 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "User profile in SpotQuest containing karma score, stats, squad, and preferences.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "email": { "type": "string" },
+        "name": { "type": "string", "maxLength": 100 },
+        "handle": { "type": "string", "maxLength": 50 },
+        "avatar": { "type": "string" },
+        "bio": { "type": "string", "maxLength": 500 },
+        "karmaPoints": { "type": "number" },
+        "itemsFound": { "type": "number" },
+        "goodDeedsLogged": { "type": "number" },
+        "tournamentsWon": { "type": "number" },
+        "totalPurseWinnings": { "type": "number" },
+        "squadId": { "type": "string" },
+        "squadName": { "type": "string" },
+        "role": { "type": "string", "enum": ["host", "player", "moderator"] },
+        "level": { "type": "number" },
+        "badge": { "type": "string" },
+        "joinedTournamentIds": { "type": "array" },
+        "createdTournamentIds": { "type": "array" },
+        "spiedObjectsCount": { "type": "number" },
+        "followingUserIds": { "type": "array" }
+      },
+      "required": ["id", "email", "name", "handle", "karmaPoints", "role"]
+    },
+    "Tournament": {
+      "title": "Tournament",
+      "description": "Scavenger tournament derby with prize purses, player limits, and challenge tasks.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string", "maxLength": 200 },
+        "description": { "type": "string", "maxLength": 2000 },
+        "buyInFee": { "type": "number" },
+        "totalPurse": { "type": "number" },
+        "playersCount": { "type": "number" },
+        "squadsCount": { "type": "number" },
+        "startTime": { "type": "string" },
+        "endsAt": { "type": "string" },
+        "status": { "type": "string", "enum": ["active", "upcoming", "completed"] },
+        "isPrivate": { "type": "boolean" },
+        "inviteCode": { "type": "string" },
+        "maxPlayers": { "type": "number" },
+        "creatorId": { "type": "string" },
+        "creatorName": { "type": "string" },
+        "sponsorBonus": { "type": "number" },
+        "rules": { "type": "array" },
+        "joinedPlayerIds": { "type": "array" }
+      },
+      "required": ["id", "title", "totalPurse", "status", "creatorId", "joinedPlayerIds"]
+    },
+    "SocialPost": {
+      "title": "SocialPost",
+      "description": "Feed publication documenting I-Spy found items, good deeds, karma donations, and clips.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "userName": { "type": "string", "maxLength": 100 },
+        "userAvatar": { "type": "string" },
+        "userHandle": { "type": "string" },
+        "squadName": { "type": "string" },
+        "type": { "type": "string", "enum": ["item_found", "good_deed", "live_clip", "announcement", "photo_challenge_completed"] },
+        "content": { "type": "string", "maxLength": 2000 },
+        "mediaUrl": { "type": "string" },
+        "mediaType": { "type": "string", "enum": ["image", "video"] },
+        "pointsEarned": { "type": "number" },
+        "karmaEarned": { "type": "number" },
+        "totalEarnedScore": { "type": "number" },
+        "likes": { "type": "number" },
+        "comments": { "type": "array" },
+        "verificationsCount": { "type": "number" },
+        "purseTipAmount": { "type": "number" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["id", "userId", "userName", "type", "content", "createdAt"]
+    },
+    "PhotoChallenge": {
+      "title": "PhotoChallenge",
+      "description": "Interactive I-Spy photo scene with tagged objects and coordinate boundaries.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "tournamentId": { "type": "string" },
+        "title": { "type": "string", "maxLength": 200 },
+        "description": { "type": "string", "maxLength": 1000 },
+        "imageUrl": { "type": "string" },
+        "sceneCategory": { "type": "string" },
+        "creatorId": { "type": "string" },
+        "creatorName": { "type": "string" },
+        "creatorAvatar": { "type": "string" },
+        "createdAt": { "type": "string" },
+        "taggedObjects": { "type": "array" },
+        "completedByUserIds": { "type": "array" }
+      },
+      "required": ["id", "tournamentId", "title", "imageUrl", "creatorId", "taggedObjects"]
+    },
+    "CustomItemRequest": {
+      "title": "CustomItemRequest",
+      "description": "Community-submitted custom scavenger hunt item for crowdsourced voting and approval.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "itemName": { "type": "string", "maxLength": 150 },
+        "category": { "type": "string" },
+        "suggestedPoints": { "type": "number" },
+        "description": { "type": "string", "maxLength": 1000 },
+        "requesterId": { "type": "string" },
+        "requesterName": { "type": "string" },
+        "requesterAvatar": { "type": "string" },
+        "status": { "type": "string", "enum": ["pending", "approved", "rejected"] },
+        "maxAllowedFinders": { "type": "number" },
+        "expiresInHours": { "type": "number" },
+        "votesUp": { "type": "number" },
+        "votesDown": { "type": "number" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["id", "itemName", "requesterId", "status", "createdAt"]
+    },
+    "ScavengerItem": {
+      "title": "ScavengerItem",
+      "description": "A catalogued everyday item with base points, category, and discovery metadata.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string", "maxLength": 150 },
+        "category": { "type": "string" },
+        "basePoints": { "type": "number" },
+        "rarity": { "type": "string", "enum": ["common", "uncommon", "rare", "legendary", "mythic"] },
+        "description": { "type": "string", "maxLength": 1000 },
+        "hint": { "type": "string", "maxLength": 500 },
+        "isCustom": { "type": "boolean" },
+        "createdBy": { "type": "string" },
+        "approvalStatus": { "type": "string", "enum": ["approved", "pending", "rejected"] },
+        "foundByCount": { "type": "number" }
+      },
+      "required": ["id", "name", "category", "basePoints", "rarity"]
+    },
+    "Squad": {
+      "title": "Squad",
+      "description": "A cooperative team of scouts sharing multiplier synergy and purse ranking.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string", "maxLength": 100 },
+        "tag": { "type": "string", "maxLength": 10 },
+        "avatar": { "type": "string" },
+        "banner": { "type": "string" },
+        "membersCount": { "type": "number" },
+        "totalItemsFound": { "type": "number" },
+        "totalKarmaPoints": { "type": "number" },
+        "combinedScore": { "type": "number" },
+        "teamMultiplier": { "type": "number" },
+        "rank": { "type": "number" }
+      },
+      "required": ["id", "name", "tag", "combinedScore", "rank"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/UserProfile" },
+      "description": "Individual player profiles with karma points, win records, and settings."
+    },
+    "/tournaments/{tournamentId}": {
+      "schema": { "$ref": "#/entities/Tournament" },
+      "description": "Tournament cups and monthly contender invitationals."
+    },
+    "/posts/{postId}": {
+      "schema": { "$ref": "#/entities/SocialPost" },
+      "description": "Social feed entries documenting found items, deeds, clips, and tips."
+    },
+    "/photoChallenges/{challengeId}": {
+      "schema": { "$ref": "#/entities/PhotoChallenge" },
+      "description": "I-Spy tagged photo challenges created by tournament organizers and scouts."
+    },
+    "/customRequests/{requestId}": {
+      "schema": { "$ref": "#/entities/CustomItemRequest" },
+      "description": "Crowdsourced custom item requests and votes."
+    },
+    "/items/{itemId}": {
+      "schema": { "$ref": "#/entities/ScavengerItem" },
+      "description": "Scavenger item catalog."
+    },
+    "/squads/{squadId}": {
+      "schema": { "$ref": "#/entities/Squad" },
+      "description": "Leaderboard squads and team synergies."
+    }
+  }
+}

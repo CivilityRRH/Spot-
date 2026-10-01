@@ -20,7 +20,10 @@ import {
   Copy,
   Check,
   Crosshair,
-  LogIn
+  LogIn,
+  MapPin,
+  Radio,
+  Compass
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { Tournament, UserProfile, PhotoChallenge } from '../types';
@@ -208,9 +211,64 @@ export const TournamentPurseView: React.FC<TournamentPurseViewProps> = ({
               {tournament.title}
             </h1>
 
+            {/* Town & Category Badge */}
+            {tournament.townOrCity && (
+              <div className="flex flex-wrap items-center gap-2 pt-1">
+                <span className="px-3 py-1 rounded-xl bg-rose-950/80 border border-rose-500/40 text-rose-300 text-xs font-black flex items-center gap-1.5">
+                  <MapPin className="w-3.5 h-3.5 text-rose-400" />
+                  <span>Town: {tournament.townOrCity}</span>
+                </span>
+                {tournament.activeSpectatorCount && (
+                  <span className="px-3 py-1 rounded-xl bg-slate-900/80 border border-slate-700 text-slate-200 text-xs font-bold flex items-center gap-1.5">
+                    <Radio className="w-3.5 h-3.5 text-rose-500 animate-pulse" />
+                    <span>{tournament.activeSpectatorCount.toLocaleString()} Live Spectators</span>
+                  </span>
+                )}
+              </div>
+            )}
+
             <p className="text-xs sm:text-sm text-slate-300 leading-relaxed max-w-xl">
               {tournament.description}
             </p>
+
+            {/* Specific Town Items & Good Deeds Showcase */}
+            {(tournament.specificHuntItems || tournament.specificGoodDeeds) && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+                {tournament.specificHuntItems && (
+                  <div className="bg-slate-950/70 border border-cyan-500/30 rounded-2xl p-3">
+                    <p className="text-[11px] font-black text-cyan-400 uppercase tracking-wider mb-1.5 flex items-center gap-1">
+                      <Compass className="w-3.5 h-3.5" />
+                      Specific Town Items to Hunt:
+                    </p>
+                    <ul className="text-xs text-slate-200 space-y-1">
+                      {tournament.specificHuntItems.slice(0, 3).map((item, idx) => (
+                        <li key={idx} className="flex items-center gap-1.5 truncate">
+                          <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 shrink-0" />
+                          <span className="truncate font-semibold">{item}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {tournament.specificGoodDeeds && (
+                  <div className="bg-slate-950/70 border border-emerald-500/30 rounded-2xl p-3">
+                    <p className="text-[11px] font-black text-emerald-400 uppercase tracking-wider mb-1.5 flex items-center gap-1">
+                      <Sparkles className="w-3.5 h-3.5" />
+                      Specific Community Deeds:
+                    </p>
+                    <ul className="text-xs text-slate-200 space-y-1">
+                      {tournament.specificGoodDeeds.slice(0, 3).map((deed, idx) => (
+                        <li key={idx} className="flex items-center gap-1.5 truncate">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />
+                          <span className="truncate font-semibold">{deed}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Creator and Invite Code details */}
             <div className="flex flex-wrap items-center gap-3 pt-1 text-xs">

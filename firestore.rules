@@ -1,0 +1,80 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 1. Global Default-Deny Catch-All
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    // Connection validation doc for startup health check
+    match /test/connection {
+      allow get: if true;
+    }
+
+    // Users collection
+    match /users/{userId} {
+      allow get: if isValidId(userId);
+      allow list: if true;
+      allow create, update: if isValidId(userId);
+      allow delete: if isSignedIn() && request.auth.uid == userId;
+    }
+
+    // Tournaments collection
+    match /tournaments/{tournamentId} {
+      allow get: if isValidId(tournamentId);
+      allow list: if true;
+      allow create, update: if isValidId(tournamentId);
+      allow delete: if isSignedIn();
+    }
+
+    // Social Posts collection
+    match /posts/{postId} {
+      allow get: if isValidId(postId);
+      allow list: if true;
+      allow create, update: if isValidId(postId);
+      allow delete: if isSignedIn();
+    }
+
+    // Photo Challenges collection
+    match /photoChallenges/{challengeId} {
+      allow get: if isValidId(challengeId);
+      allow list: if true;
+      allow create, update: if isValidId(challengeId);
+      allow delete: if isSignedIn();
+    }
+
+    // Custom Item Requests collection
+    match /customRequests/{requestId} {
+      allow get: if isValidId(requestId);
+      allow list: if true;
+      allow create, update: if isValidId(requestId);
+      allow delete: if isSignedIn();
+    }
+
+    // Scavenger Items catalog
+    match /items/{itemId} {
+      allow get: if isValidId(itemId);
+      allow list: if true;
+      allow create, update: if isValidId(itemId);
+      allow delete: if isSignedIn();
+    }
+
+    // Squads collection
+    match /squads/{squadId} {
+      allow get: if isValidId(squadId);
+      allow list: if true;
+      allow create, update: if isValidId(squadId);
+      allow delete: if isSignedIn();
+    }
+  }
+}
+

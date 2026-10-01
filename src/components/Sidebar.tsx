@@ -16,7 +16,10 @@ import {
   PlusCircle,
   Camera,
   UserCheck,
-  Crown
+  Crown,
+  Tv,
+  MapPin,
+  Video
 } from 'lucide-react';
 import { UserProfile, Tournament } from '../types';
 
@@ -40,12 +43,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onOpenCreateChallenge
 }) => {
   const navItems = [
-    { id: 'feed', label: 'Social Feed & Clips', icon: Rss, badge: 'Live' },
+    { id: 'live_hub', label: 'Watch Live TV Show', icon: Tv, badge: '🔴 ON AIR' },
+    { id: 'workspace', label: 'Meet, Chat & Classroom', icon: Video, badge: 'Google Hub' },
+    { id: 'feed', label: 'Social & Kindness Feed', icon: Rss, badge: 'Live' },
+    { id: 'tournament', label: 'Town Tournaments ($)', icon: Trophy, badge: `$${activeTournament.totalPurse}` },
     { id: 'challenges', label: 'I-Spy Photo Scenes', icon: Crosshair, badge: 'Tag & Play' },
-    { id: 'live_hub', label: 'Live Broadcasts', icon: Radio, badge: 'Active' },
-    { id: 'catalog', label: 'Everyday Items (I-Spy)', icon: Compass, badge: 'Unlimited' },
-    { id: 'calculator', label: 'Karma & Deeds Calculator', icon: Calculator, badge: 'Boost' },
-    { id: 'tournament', label: 'Tournaments & Purse ($)', icon: Trophy, badge: `$${activeTournament.totalPurse}` },
+    { id: 'catalog', label: 'Everyday Town Items', icon: Compass, badge: 'Unlimited' },
+    { id: 'calculator', label: 'Good Deeds Calculator', icon: Calculator, badge: 'Boost' },
     { id: 'monthly_contenders', label: 'Monthly Top Contenders', icon: Crown, badge: '$10k Cup' },
     { id: 'custom_requests', label: 'Custom Item Requests', icon: FileQuestion, badge: 'Community' },
     { id: 'squads', label: 'Squads & Team Boost', icon: Users, badge: 'Synergy' },

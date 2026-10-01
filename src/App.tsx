@@ -40,10 +40,28 @@ import { InteractiveISpyPlayerModal } from './components/InteractiveISpyPlayerMo
 import { ScoutProfileModal } from './components/ScoutProfileModal';
 import { PhotoChallengesListView } from './components/PhotoChallengesListView';
 import { MonthlyContendersView } from './components/MonthlyContendersView';
+import { LiveTVHubView } from './components/LiveTVHubView';
+import { WorkspaceHubView } from './components/WorkspaceHubView';
 import { sounds } from './utils/audio';
 import { loadStorage, saveStorage } from './utils/storage';
 import confetti from 'canvas-confetti';
 import { Radio } from 'lucide-react';
+import { onAuthStateChanged, signOut } from 'firebase/auth';
+import { auth } from './firebase';
+import {
+  getUserProfileDoc,
+  saveUserProfileDoc,
+  subscribeToTournaments,
+  saveTournamentDoc,
+  subscribeToPosts,
+  savePostDoc,
+  subscribeToPhotoChallenges,
+  savePhotoChallengeDoc,
+  subscribeToCustomRequests,
+  saveCustomRequestDoc,
+  subscribeToItems,
+  saveItemDoc,
+} from './services/firestoreService';
 
 export default function App() {
   // Global User & Accounts State (Persisted)
@@ -90,6 +108,86 @@ export default function App() {
   useEffect(() => saveStorage('karmaspy_posts', posts), [posts]);
   useEffect(() => saveStorage('karmaspy_custom_requests', customRequests), [customRequests]);
   useEffect(() => saveStorage('karmaspy_leaderboard', leaderboard), [leaderboard]);
+
+  // Firebase Auth & Firestore Real-Time Subscriptions
+  useEffect(() => {
+    const unsubscribeAuth = onAuthStateChanged(auth, async (fbUser) => {
+      if (fbUser) {
+        try {
+          const profile = await getUserProfileDoc(fbUser.uid);
+          if (profile) {
+            setUser(profile);
+            setAccounts((prev) => {
+              const existingIdx = prev.findIndex((a) => a.id === profile.id);
+              if (existingIdx >= 0) {
+                const copy = [...prev];
+                copy[existingIdx] = { ...copy[existingIdx], profile };
+                return copy;
+              }
+              return [{ id: profile.id, email: profile.email, profile }, ...prev];
+            });
+          }
+        } catch (e) {
+          console.log('Firebase user profile sync notice:', e);
+        }
+      }
+    });
+
+    // Real-time Firestore synchronizers
+    const unsubTournaments = subscribeToTournaments(
+      (remoteTournaments) => {
+        if (remoteTournaments && remoteTournaments.length > 0) {
+          setTournaments(remoteTournaments);
+        }
+      },
+      (err) => console.log('Tournaments Firestore sync notice:', err)
+    );
+
+    const unsubPosts = subscribeToPosts(
+      (remotePosts) => {
+        if (remotePosts && remotePosts.length > 0) {
+          setPosts(remotePosts);
+        }
+      },
+      (err) => console.log('Posts Firestore sync notice:', err)
+    );
+
+    const unsubChallenges = subscribeToPhotoChallenges(
+      (remoteChallenges) => {
+        if (remoteChallenges && remoteChallenges.length > 0) {
+          setPhotoChallenges(remoteChallenges);
+        }
+      },
+      (err) => console.log('Photo challenges Firestore sync notice:', err)
+    );
+
+    const unsubRequests = subscribeToCustomRequests(
+      (remoteRequests) => {
+        if (remoteRequests && remoteRequests.length > 0) {
+          setCustomRequests(remoteRequests);
+        }
+      },
+      (err) => console.log('Custom requests Firestore sync notice:', err)
+    );
+
+    const unsubItems = subscribeToItems(
+      (remoteItems) => {
+        if (remoteItems && remoteItems.length > 0) {
+          setItems(remoteItems);
+        }
+      },
+      (err) => console.log('Items Firestore sync notice:', err)
+    );
+
+    return () => {
+      unsubscribeAuth();
+      unsubTournaments();
+      unsubPosts();
+      unsubChallenges();
+      unsubRequests();
+      unsubItems();
+    };
+  }, []);
 
   // Navigation & Search
   const [activeTab, setActiveTab] = useState<string>('feed');
@@ -277,6 +375,9 @@ export default function App() {
         )
       );
 
+      // Async write to Firestore
+      saveUserProfileDoc(newUser).catch((e) => console.log('Firestore user sync notice:', e));
+
       return newUser;
     });
 
@@ -285,8 +386,13 @@ export default function App() {
     }
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     setIsProfileModalOpen(false);
+    try {
+      await signOut(auth);
+    } catch (e) {
+      console.log('Firebase signOut error:', e);
+    }
     setIsAuthModalOpen(true);
   };
 
@@ -301,6 +407,7 @@ export default function App() {
       setAccounts((accs) =>
         accs.map((a) => (a.profile.id === updated.id ? { ...a, profile: updated } : a))
       );
+      saveUserProfileDoc(updated).catch((e) => console.log('Firestore karma sync notice:', e));
       return updated;
     });
   };
@@ -308,6 +415,7 @@ export default function App() {
   // Tournament Handlers
   const handleCreateTournament = (newTourney: Tournament) => {
     setTournaments((prev) => [newTourney, ...prev]);
+    saveTournamentDoc(newTourney).catch((e) => console.log('Firestore tournament sync notice:', e));
     setActiveTournamentId(newTourney.id);
     setActiveTab('tournament');
     sounds.playPurseJackpot();
@@ -384,6 +492,8 @@ export default function App() {
     };
 
     setPosts((prev) => [post, ...prev]);
+    savePhotoChallengeDoc(newChallenge).catch((e) => console.log('Firestore challenge sync notice:', e));
+    savePostDoc(post).catch((e) => console.log('Firestore post sync notice:', e));
     sounds.playPurseJackpot();
     confetti({
       particleCount: 80,
@@ -615,6 +725,9 @@ export default function App() {
     };
 
     setPosts((prev) => [newPost, ...prev]);
+    savePostDoc(newPost).catch((e) => console.log('Firestore post sync notice:', e));
+    saveItemDoc(claimData.item).catch((e) => console.log('Firestore item sync notice:', e));
+    saveUserProfileDoc(user).catch((e) => console.log('Firestore user sync notice:', e));
 
     confetti({
       particleCount: 70,
@@ -677,6 +790,8 @@ export default function App() {
     };
 
     setPosts((prev) => [newClipPost, ...prev]);
+    savePostDoc(newClipPost).catch((e) => console.log('Firestore clip sync notice:', e));
+    saveUserProfileDoc(user).catch((e) => console.log('Firestore user sync notice:', e));
 
     setUser((prev) => ({
       ...prev,
@@ -738,6 +853,8 @@ export default function App() {
     };
 
     setPosts((prev) => [deedPost, ...prev]);
+    savePostDoc(deedPost).catch((e) => console.log('Firestore deed sync notice:', e));
+    saveUserProfileDoc(user).catch((e) => console.log('Firestore user sync notice:', e));
 
     confetti({
       particleCount: 50,
@@ -842,6 +959,7 @@ export default function App() {
     };
 
     setCustomRequests((prev) => [newReq, ...prev]);
+    saveCustomRequestDoc(newReq).catch((e) => console.log('Firestore request sync notice:', e));
   };
 
   // Handler: Approve Custom Item into Catalog
@@ -849,13 +967,16 @@ export default function App() {
     const req = customRequests.find((r) => r.id === requestId);
     if (!req) return;
 
+    const updatedReq: CustomItemRequest = {
+      ...req,
+      status: 'approved',
+      adminNotes: 'Approved by Tournament Host & Injected into catalog!'
+    };
+
     setCustomRequests((prev) =>
-      prev.map((r) =>
-        r.id === requestId
-          ? { ...r, status: 'approved', adminNotes: 'Approved by Tournament Host & Injected into catalog!' }
-          : r
-      )
+      prev.map((r) => (r.id === requestId ? updatedReq : r))
     );
+    saveCustomRequestDoc(updatedReq).catch((e) => console.log('Firestore request approve sync notice:', e));
 
     // Add to items list
     const newItem: ScavengerItem = {
@@ -872,6 +993,7 @@ export default function App() {
     };
 
     setItems((prev) => [newItem, ...prev]);
+    saveItemDoc(newItem).catch((e) => console.log('Firestore item sync notice:', e));
     sounds.playPurseJackpot();
   };
 
@@ -928,6 +1050,7 @@ export default function App() {
     };
 
     setPosts((prev) => [post, ...prev]);
+    savePostDoc(post).catch((e) => console.log('Firestore custom post sync notice:', e));
   };
 
   return (
@@ -1001,98 +1124,34 @@ export default function App() {
             )}
 
             {activeTab === 'live_hub' && (
-              <div className="space-y-6">
-                <div className="bg-gradient-to-r from-rose-950/80 via-slate-900 to-indigo-950/80 border border-rose-500/40 rounded-3xl p-6 shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-                  <div>
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="px-2.5 py-0.5 rounded-full bg-rose-600 text-white text-[10px] font-black uppercase tracking-wider animate-pulse">
-                        LIVE BROADCAST HUB
-                      </span>
-                      <span className="text-xs text-slate-300 font-bold">2 Streams Active Now</span>
-                    </div>
-                    <h2 className="text-xl sm:text-2xl font-black text-white">
-                      Live I-Spy Hunts & Karma Streams
-                    </h2>
-                    <p className="text-xs sm:text-sm text-slate-300 mt-1 max-w-xl">
-                      Watch fellow hunters stream their city discoveries and good deeds live in real-time. Cheer with karma or broadcast your own hunt!
-                    </p>
-                  </div>
-                  <button
-                    onClick={() => setIsLiveModalOpen(true)}
-                    className="flex items-center gap-2 px-5 py-3 rounded-2xl bg-rose-600 hover:bg-rose-500 text-white font-extrabold text-xs shadow-lg shadow-rose-600/30 transition transform hover:scale-[1.02]"
-                  >
-                    <Radio className="w-4 h-4 animate-pulse" />
-                    <span>Go Live & Record Stream</span>
-                  </button>
-                </div>
+              <LiveTVHubView
+                activeTournament={activeTournament}
+                allTournaments={tournaments}
+                onSelectTournament={(tournId) => setActiveTournamentId(tournId)}
+                onOpenLiveBroadcaster={() => setIsLiveModalOpen(true)}
+                onClaimItemQuick={(itemName) => {
+                  const matchedItem = items.find((i) => i.name.toLowerCase() === itemName.toLowerCase()) || {
+                    id: `town_item_${Date.now()}`,
+                    name: itemName,
+                    category: 'Urban & Street',
+                    basePoints: 75,
+                    rarity: 'rare',
+                    description: `Official town hunt item: ${itemName}`,
+                    foundByCount: 12,
+                    isFoundByMe: false
+                  };
+                  setSelectedItemForClaim(matchedItem as ScavengerItem);
+                  setIsClaimModalOpen(true);
+                }}
+              />
+            )}
 
-                {/* Active streams grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div
-                    onClick={() => setIsLiveModalOpen(true)}
-                    className="bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden shadow-lg cursor-pointer group hover:border-rose-500/50 transition"
-                  >
-                    <div className="relative h-56 bg-slate-950">
-                      <img
-                        src="https://images.unsplash.com/photo-1512486130939-2c4f79935e4f?w=800&auto=format&fit=crop&q=80"
-                        alt="Maya stream"
-                        className="w-full h-full object-cover group-hover:scale-105 transition duration-500"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-black/60 p-4 flex flex-col justify-between">
-                        <div className="flex items-center justify-between">
-                          <span className="px-2.5 py-1 rounded-full bg-rose-600 text-white text-[10px] font-black uppercase flex items-center gap-1.5 shadow-md">
-                            <span className="w-1.5 h-1.5 rounded-full bg-white animate-ping" />
-                            <span>LIVE</span>
-                          </span>
-                          <span className="px-2.5 py-1 rounded-full bg-black/60 backdrop-blur-md text-white text-xs font-bold">
-                            148 watching
-                          </span>
-                        </div>
-                        <div>
-                          <span className="px-2 py-0.5 rounded-lg bg-indigo-900/80 text-indigo-200 text-[10px] font-bold">
-                            🔍 Hunting: Antique Typewriter
-                          </span>
-                          <h4 className="text-white font-extrabold text-sm mt-1">
-                            🔴 Searching for the Antique Typewriter in Old Town!
-                          </h4>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div
-                    onClick={() => setIsLiveModalOpen(true)}
-                    className="bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden shadow-lg cursor-pointer group hover:border-emerald-500/50 transition"
-                  >
-                    <div className="relative h-56 bg-slate-950">
-                      <img
-                        src="https://images.unsplash.com/photo-1501854140801-50d01698950b?w=800&auto=format&fit=crop&q=80"
-                        alt="Samir stream"
-                        className="w-full h-full object-cover group-hover:scale-105 transition duration-500"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-black/60 p-4 flex flex-col justify-between">
-                        <div className="flex items-center justify-between">
-                          <span className="px-2.5 py-1 rounded-full bg-rose-600 text-white text-[10px] font-black uppercase flex items-center gap-1.5 shadow-md">
-                            <span className="w-1.5 h-1.5 rounded-full bg-white animate-ping" />
-                            <span>LIVE</span>
-                          </span>
-                          <span className="px-2.5 py-1 rounded-full bg-black/60 backdrop-blur-md text-white text-xs font-bold">
-                            94 watching
-                          </span>
-                        </div>
-                        <div>
-                          <span className="px-2 py-0.5 rounded-lg bg-emerald-900/80 text-emerald-200 text-[10px] font-bold">
-                            ✨ Deed: River Walk Trash Pick & Double Rainbow
-                          </span>
-                          <h4 className="text-white font-extrabold text-sm mt-1">
-                            🔴 River Walk Trash Pick & Double Rainbow Hunt
-                          </h4>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
+            {activeTab === 'workspace' && (
+              <WorkspaceHubView
+                user={user}
+                tournaments={tournaments}
+                activeTournament={activeTournament}
+              />
             )}
 
             {activeTab === 'catalog' && (

@@ -18,6 +18,9 @@ import {
 import { UserAccount, UserProfile } from '../types';
 import { sounds } from '../utils/audio';
 import { compressImageDataUrl } from '../utils/storage';
+import { auth, googleProvider } from '../firebase';
+import { signInWithPopup } from 'firebase/auth';
+import { getUserProfileDoc, saveUserProfileDoc } from '../services/firestoreService';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -64,8 +67,62 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
   // Error feedback
   const [errorMsg, setErrorMsg] = useState('');
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
 
   if (!isOpen) return null;
+
+  const handleGoogleSignIn = async () => {
+    setErrorMsg('');
+    setIsGoogleLoading(true);
+    try {
+      const result = await signInWithPopup(auth, googleProvider);
+      const fbUser = result.user;
+      if (!fbUser) throw new Error('No user returned from Google Sign In');
+
+      // Check if user profile already exists in Firestore
+      let existingProfile = await getUserProfileDoc(fbUser.uid);
+      if (!existingProfile) {
+        const cleanHandle = `@${(fbUser.displayName || 'scout').toLowerCase().replace(/\s+/g, '_')}`;
+        existingProfile = {
+          id: fbUser.uid,
+          email: fbUser.email || 'scout@spotquest.app',
+          name: fbUser.displayName || 'SpotQuest Scout',
+          handle: cleanHandle,
+          avatar: fbUser.photoURL || AVATAR_PRESETS[0],
+          bio: 'Verified Scout on SpotQuest',
+          karmaPoints: 150, // Welcome bonus
+          itemsFound: 0,
+          goodDeedsLogged: 0,
+          tournamentsWon: 0,
+          totalPurseWinnings: 0,
+          squadId: 'sq_phoenix',
+          squadName: 'Phoenix Karma Seekers',
+          role: 'player',
+          level: 1,
+          badge: 'Verified Google Scout',
+          joinedTournamentIds: ['tourn_grand_spring_2026', 'tourn_monthly_contenders_sep_2026'],
+          createdTournamentIds: [],
+          spiedObjectsCount: 0,
+        };
+        await saveUserProfileDoc(existingProfile);
+      }
+
+      const userAcc: UserAccount = {
+        id: existingProfile.id,
+        email: existingProfile.email,
+        profile: existingProfile,
+      };
+
+      sounds.playKarmaChime();
+      onLogin(userAcc);
+      onClose();
+    } catch (err: any) {
+      console.error('Google Sign In Error:', err);
+      setErrorMsg(err.message || 'Failed to sign in with Google. Check popup permissions.');
+    } finally {
+      setIsGoogleLoading(false);
+    }
+  };
 
   const handleLoginSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -167,10 +224,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-amber-500 via-rose-500 to-indigo-600 flex items-center justify-center text-white font-black text-sm shadow-md">
                 👁️
               </div>
-              <span className="font-extrabold text-base text-white">KarmaSpy Auth</span>
+              <span className="font-extrabold text-base text-white">SpotQuest Auth & Cloud Sync</span>
             </div>
             <p className="text-xs text-slate-400">
-              Sign in to join tournaments, win purse jackpots, and log verified good deeds.
+              Sign in to sync your score, join tournaments, claim prizes, and log good deeds to Firebase.
             </p>
           </div>
           <button
@@ -179,6 +236,42 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           >
             ✕
           </button>
+        </div>
+
+        {/* Firebase Google Auth Button */}
+        <button
+          type="button"
+          onClick={handleGoogleSignIn}
+          disabled={isGoogleLoading}
+          className="w-full py-2.5 px-4 bg-white hover:bg-slate-100 text-slate-900 font-bold text-xs rounded-xl shadow-md flex items-center justify-center gap-2.5 transition border border-slate-200 disabled:opacity-50 cursor-pointer"
+        >
+          <svg className="w-4 h-4" viewBox="0 0 24 24">
+            <path
+              fill="#4285F4"
+              d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.17z"
+            />
+            <path
+              fill="#34A853"
+              d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.36 24 12 24z"
+            />
+            <path
+              fill="#FBBC05"
+              d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.18 0 9.98 0 12s.45 3.82 1.25 5.42l4.03-3.15z"
+            />
+            <path
+              fill="#EA4335"
+              d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.36 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z"
+            />
+          </svg>
+          <span>{isGoogleLoading ? 'Connecting to Google...' : 'Continue with Google'}</span>
+        </button>
+
+        <div className="relative flex py-1 items-center">
+          <div className="flex-grow border-t border-slate-800"></div>
+          <span className="flex-shrink mx-3 text-[10px] uppercase font-bold tracking-wider text-slate-500">
+            or use credentials
+          </span>
+          <div className="flex-grow border-t border-slate-800"></div>
         </div>
 
         {/* Tab Selection */}

@@ -93,7 +93,23 @@ export const INITIAL_TOURNAMENTS: Tournament[] = [
   {
     id: 'tourn_grand_spring_2026',
     title: 'Metro Scavenger Grand Purse & Karma Derby',
-    description: 'The premier open-world I-Spy scavenger tournament where good deeds count double! Spot everyday items across the city and record genuine acts of kindness live.',
+    description: 'The premier open-world Pokémon-GO style I-Spy scavenger tournament! Hunt for iconic artifacts across town while broadcasting good deeds live to the world to climb the global leaderboard.',
+    townOrCity: 'Austin, TX (Downtown & Lady Bird Lake)',
+    regionCoordinates: { lat: 30.2672, lng: -97.7431 },
+    huntCategory: 'Urban Exploration',
+    specificHuntItems: [
+      'Art Deco Iron Mailbox',
+      'Hand-Painted Bat Mural',
+      'Solar-Powered Public Bench',
+      'Vintage Turquoise Food Truck',
+      'Cast-Iron Fire Hydrant on 6th St'
+    ],
+    specificGoodDeeds: [
+      'Collect 5+ items of lake/park litter into recycling bins',
+      'Return 3 abandoned shopping carts to designated corral',
+      'Water wilting public planter boxes or community flower beds',
+      'Help a neighbor or visitor carry heavy groceries/bags'
+    ],
     buyInFee: 25,
     totalPurse: 5400,
     playersCount: 216,
@@ -106,11 +122,13 @@ export const INITIAL_TOURNAMENTS: Tournament[] = [
     creatorId: 'usr_marcus',
     creatorName: 'Marcus Cole (Host)',
     sponsorBonus: 1000,
+    activeSpectatorCount: 1420,
+    isLiveBroadcasting: true,
     rules: [
       'Every player hunts for themselves, but team members amplify collective karma boosts.',
-      'Live stream or video verification required for all Rare, Legendary, and Ultra items.',
-      'Good deed multiplier scales with community verification votes.',
-      'Anti-cheat auto-inspection enabled for geotags & photo timestamps.',
+      'Gemini Vision AI live scans camera and video frames to score items & verify good deeds in real time.',
+      'Good deed multiplier scales with community verification votes and authenticity score.',
+      'Anyone can watch live broadcasts like a game show on TV, tipping and cheering for positive acts.',
       'Top 3 winners take 90% of the jackpot purse; 10% awarded to the Ultimate Karma Deed Champion.'
     ],
     prizeSplit: {
@@ -125,8 +143,22 @@ export const INITIAL_TOURNAMENTS: Tournament[] = [
   },
   {
     id: 'tourn_eco_sprint',
-    title: 'Urban Eco-Spy & Community Cleanup Blitz',
-    description: '48-Hour rapid sprint focused on finding urban oddities while picking up litter and helping neighborhood elders.',
+    title: 'Seattle Waterfront Eco-Spy & Community Cleanup Blitz',
+    description: '48-Hour rapid sprint focused on finding Pacific Northwest coastal treasures while picking up beach litter and helping local elder neighbors.',
+    townOrCity: 'Seattle, WA (Pike Place & Elliott Bay)',
+    regionCoordinates: { lat: 47.6062, lng: -122.3321 },
+    huntCategory: 'Eco Cleanup',
+    specificHuntItems: [
+      'Brass Nautical Compass Rose on Boardwalk',
+      'Vintage Copper Weather Vane',
+      'Hand-Carved Wooden Cedar Totem Motif',
+      'Cobblestone Alley Streetlamp'
+    ],
+    specificGoodDeeds: [
+      'Collect beach plastic or ocean debris along the shore',
+      'Pay-it-forward coffee or treat for someone in line',
+      'Volunteer at or donate items to local neighborhood food pantry'
+    ],
     buyInFee: 10,
     totalPurse: 1800,
     playersCount: 180,
@@ -139,9 +171,11 @@ export const INITIAL_TOURNAMENTS: Tournament[] = [
     creatorId: 'usr_maya',
     creatorName: 'Maya Lin',
     sponsorBonus: 500,
+    activeSpectatorCount: 840,
+    isLiveBroadcasting: false,
     rules: [
       'Eco-actions grant 2.5x multiplier on any item discovered within 15 minutes of logging the deed.',
-      'Photo challenges must have at least 3 tagged recycled or cleanup items.'
+      'Gemini Vision checks before/after snapshots of cleanups for instant verification.'
     ],
     prizeSplit: {
       firstPlace: 900,
@@ -155,8 +189,23 @@ export const INITIAL_TOURNAMENTS: Tournament[] = [
   },
   {
     id: 'tourn_monthly_contenders_sep_2026',
-    title: 'SpotQuest Monthly Contenders Invitational (September 2026)',
-    description: 'The elite monthly championship reserved exclusively for past tournament winners and top karma leaders. Compete for the $10,000 Grand Monthly Purse Jackpot and the title of SpotQuest Champion of the Month!',
+    title: 'SpotQuest World Contenders Championship (Global Cities)',
+    description: 'The premier worldwide live-streamed championship. Millions watch live as top contenders roam cities across the globe finding legendary artifacts and performing life-changing community deeds.',
+    townOrCity: 'Global Metro (New York, Tokyo, London, Paris)',
+    regionCoordinates: { lat: 40.7128, lng: -74.0060 },
+    huntCategory: 'Community Kindness',
+    specificHuntItems: [
+      'Historic Cast-Iron Street Clock',
+      'Origami Crane Left on Public Bench',
+      'Artisan Mosaic Tile on Subway Wall',
+      'Gilded Library Bookplate',
+      'Vintage Rotary Phone in Indie Cafe'
+    ],
+    specificGoodDeeds: [
+      'Organize a 5-person community park cleanup crew',
+      'Verified blood donation or shelter pet support shift',
+      'Teach a free skill or assist 3 strangers with transportation/luggage'
+    ],
     buyInFee: 0,
     totalPurse: 10000,
     playersCount: 28,
@@ -170,11 +219,13 @@ export const INITIAL_TOURNAMENTS: Tournament[] = [
     creatorId: 'sys_spotquest',
     creatorName: 'SpotQuest Championship League',
     sponsorBonus: 3500,
+    activeSpectatorCount: 5280,
+    isLiveBroadcasting: true,
     rules: [
       'Invitational access restricted to scouts with 1+ Tournament Wins or 1,000+ Karma Points.',
-      '2.0x Double Karma XP boost applied to all verified good deeds & spotted photo challenges.',
+      'Live stream broadcast mode active 24/7 with real-time Gemini Vision referee scoring.',
       'Top 3 Contenders share $8,000; Ultimate Karma Hero receives $2,000 bonus.',
-      'Automated radar location hints active for all contenders.'
+      'Spectator chat votes and cheer reactions trigger instantaneous multiplier boosts.'
     ],
     prizeSplit: {
       firstPlace: 5000,
@@ -188,8 +239,22 @@ export const INITIAL_TOURNAMENTS: Tournament[] = [
   },
   {
     id: 'tourn_private_secret_society',
-    title: 'Secret Society: Antique Vault & Hidden Relics',
-    description: 'Exclusive private invitational tournament for veteran I-Spy masters and collectors. High stakes, intricate photo riddles, and generous charity purse matching.',
+    title: 'Savannah Historic District: Antique Relics & Community Care',
+    description: 'Explore shaded historic squares and moss-draped avenues to uncover secret architectural oddities while helping local historic preservation and community gardens.',
+    townOrCity: 'Savannah, GA (Historic Squares)',
+    regionCoordinates: { lat: 32.0809, lng: -81.0912 },
+    huntCategory: 'Historic Town',
+    specificHuntItems: [
+      'Wrought Iron Gate with Fleur-de-Lis Emblem',
+      'Cobblestone Ballast Stone from 18th Century',
+      'Victorian Sundial in Shaded Courtyard',
+      'Brass Door Knocker shaped like a Lion'
+    ],
+    specificGoodDeeds: [
+      'Sweep fallen leaves / debris off historic brick walkways',
+      'Offer directions and friendly town history guidance to visitors',
+      'Plant native wildflower seeds in approved community garden beds'
+    ],
     buyInFee: 50,
     totalPurse: 3250,
     playersCount: 45,
@@ -203,10 +268,12 @@ export const INITIAL_TOURNAMENTS: Tournament[] = [
     creatorId: 'usr_me',
     creatorName: 'Ronnie Hills (Host)',
     sponsorBonus: 1000,
+    activeSpectatorCount: 620,
+    isLiveBroadcasting: true,
     rules: [
       'Private invite code required to join.',
-      'Photo challenges feature micro-detail object tagging with high points.',
-      '10% of total purse donated to local community heritage foundation.'
+      'Live camera scanning required for verification of all historic targets.',
+      '10% of total purse donated to local Savannah community heritage foundation.'
     ],
     prizeSplit: {
       firstPlace: 1625,

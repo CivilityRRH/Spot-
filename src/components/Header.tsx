@@ -1,5 +1,5 @@
 import React from 'react';
-import { Radio, Sparkles, Trophy, PlusCircle, Bell, Search, ShieldCheck, User, Plus, Camera } from 'lucide-react';
+import { Radio, Sparkles, Trophy, PlusCircle, Bell, Search, ShieldCheck, User, Plus, Camera, Tv } from 'lucide-react';
 import { UserProfile, Tournament } from '../types';
 
 interface HeaderProps {
@@ -70,6 +70,21 @@ export const Header: React.FC<HeaderProps> = ({
 
         {/* Live Purse & Action Buttons */}
         <div className="flex items-center gap-2 sm:gap-3">
+          {/* Watch Live TV Button */}
+          <button
+            onClick={() => onTabChange('live_hub')}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-black transition ${
+              activeTab === 'live_hub'
+                ? 'bg-rose-600 border-rose-500 text-white shadow-md'
+                : 'bg-rose-950/50 hover:bg-rose-900/60 border-rose-500/40 text-rose-300'
+            }`}
+            title="Watch Live Scavenger Broadcasts like a TV game show"
+          >
+            <Tv className="w-3.5 h-3.5 text-rose-400" />
+            <span className="hidden sm:inline">Watch Live TV</span>
+            <span className="w-2 h-2 rounded-full bg-rose-400 animate-ping" />
+          </button>
+
           {/* Tournament Purse Pill */}
           <button
             onClick={() => onTabChange('tournament')}

@@ -33,6 +33,9 @@ export const CreateTournamentModal: React.FC<CreateTournamentModalProps> = ({
 }) => {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
+  const [townOrCity, setTownOrCity] = useState('Austin, TX (Downtown & Lady Bird Lake)');
+  const [specificHuntItemsText, setSpecificHuntItemsText] = useState('Vintage Turquoise Food Truck, Art Deco Iron Mailbox, Hand-Painted Bat Mural');
+  const [specificGoodDeedsText, setSpecificGoodDeedsText] = useState('Collect 5+ items of park litter, Return 3 abandoned shopping carts, Help carry groceries');
   const [isPrivate, setIsPrivate] = useState(false);
   const [inviteCode, setInviteCode] = useState(`SPY-${Math.floor(1000 + Math.random() * 9000)}`);
   const [buyInFee, setBuyInFee] = useState<number>(25);
@@ -70,10 +73,24 @@ export const CreateTournamentModal: React.FC<CreateTournamentModalProps> = ({
 
     const initialPot = buyInFee * 1 + sponsorBonus; // Host is 1st player + sponsor
 
+    const parsedItems = specificHuntItemsText
+      .split(',')
+      .map((s) => s.trim())
+      .filter((s) => s.length > 0);
+
+    const parsedDeeds = specificGoodDeedsText
+      .split(',')
+      .map((s) => s.trim())
+      .filter((s) => s.length > 0);
+
     const newTourney: Tournament = {
       id: `tourn_${Date.now()}`,
       title: title.trim(),
       description: description.trim(),
+      townOrCity: townOrCity.trim(),
+      huntCategory: 'Urban Exploration',
+      specificHuntItems: parsedItems.length > 0 ? parsedItems : ['Historic Clock', 'Murals', 'Vintage Bench'],
+      specificGoodDeeds: parsedDeeds.length > 0 ? parsedDeeds : ['Litter cleanup', 'Elderly assistance'],
       buyInFee,
       totalPurse: initialPot,
       playersCount: 1, // Host joined
@@ -87,6 +104,8 @@ export const CreateTournamentModal: React.FC<CreateTournamentModalProps> = ({
       creatorId: user.id,
       creatorName: `${user.name} (Host)`,
       sponsorBonus,
+      activeSpectatorCount: 150,
+      isLiveBroadcasting: true,
       rules: rules.length > 0 ? rules : ['Standard KarmaSpy Fair Play rules apply.'],
       prizeSplit: {
         firstPlace: Math.round(initialPot * 0.5),
@@ -145,6 +164,43 @@ export const CreateTournamentModal: React.FC<CreateTournamentModalProps> = ({
               onChange={(e) => setTitle(e.target.value)}
               placeholder="E.g. Downtown Metro Hidden Relics & Kindness Derby"
               className="w-full px-3.5 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-slate-100 placeholder-slate-500 focus:outline-none focus:border-rose-500 font-semibold"
+              required
+            />
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label className="block font-bold text-slate-300 mb-1">Town / City / Neighborhood</label>
+              <input
+                type="text"
+                value={townOrCity}
+                onChange={(e) => setTownOrCity(e.target.value)}
+                placeholder="E.g. Austin, TX (Downtown & Lady Bird Lake)"
+                className="w-full px-3.5 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100 placeholder-slate-500 focus:outline-none focus:border-rose-500"
+                required
+              />
+            </div>
+            <div>
+              <label className="block font-bold text-slate-300 mb-1">Specific Items to Hunt (comma-separated)</label>
+              <input
+                type="text"
+                value={specificHuntItemsText}
+                onChange={(e) => setSpecificHuntItemsText(e.target.value)}
+                placeholder="E.g. Iron Mailbox, Bat Mural, Turquoise Truck"
+                className="w-full px-3.5 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100 placeholder-slate-500 focus:outline-none focus:border-rose-500"
+                required
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block font-bold text-slate-300 mb-1">Specific Good Deeds (comma-separated)</label>
+            <input
+              type="text"
+              value={specificGoodDeedsText}
+              onChange={(e) => setSpecificGoodDeedsText(e.target.value)}
+              placeholder="E.g. Collect 5 park bottles, Return stray carts, Help carry groceries"
+              className="w-full px-3.5 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100 placeholder-slate-500 focus:outline-none focus:border-rose-500"
               required
             />
           </div>
